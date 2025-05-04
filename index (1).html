@@ -1,0 +1,238 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Montserrat:wght@500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #808080;
+            color: #000000;
+            font-family: 'Roboto', sans-serif;
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 200px;
+            background-color: #333;
+            color: #fff;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            position: fixed;
+            height: 100%;
+        }
+        .sidebar h1 {
+            font-size: 1.5rem;
+            margin: 0 0 1.5rem;
+            font-family: 'Montserrat', sans-serif;
+        }
+        .sidebar a {
+            color: #fff;
+            text-decoration: none;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            transition: color 0.3s ease, transform 0.3s ease;
+        }
+        .sidebar a:hover {
+            color: #ff6200;
+            transform: translateY(5px);
+        }
+        .content {
+            flex: 1;
+            padding: 2rem;
+            margin-left: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .section {
+            width: 80%;
+            background-color: #f0f0f0;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border-radius: 4px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .section h2 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.8rem;
+            margin: 0 0 1rem;
+            color: #000;
+        }
+        .section p {
+            font-size: 1rem;
+            margin: 0;
+        }
+        .skills-list {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .skills-list li {
+            background-color: #000;
+            color: #fff;
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        .project-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        .project {
+            background-color: #e0e0e0;
+            padding: 1rem;
+            border-radius: 4px;
+            color: #000;
+        }
+        .project h3 {
+            margin: 0 0 0.5rem;
+            font-size: 1.2rem;
+            font-family: 'Montserrat', sans-serif;
+        }
+        .project p {
+            margin: 0;
+            font-size: 0.9rem;
+        }
+        .project a {
+            color: #000;
+            text-decoration: underline;
+            transition: color 0.3s ease;
+        }
+        .project a:hover {
+            color: #ff6200;
+        }
+        #contact p {
+            margin: 0.5rem 0;
+        }
+        @media (max-width: 600px) {
+            .sidebar {
+                width: 150px;
+            }
+            .content {
+                margin-left: 150px;
+            }
+            .section {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h1>Portfolio</h1>
+        <a href="#about">About Me</a>
+        <a href="#skills">Skills</a>
+        <a href="#projects">Projects</a>
+        <a href="#contact">Contact</a>
+    </div>
+    <div class="content">
+        <div class="section visible" id="about">
+            <h2>About Me</h2>
+            <p>Passionate Roblox Studio developer creating unique gaming experiences with a focus on Lua scripting and design.</p>
+        </div>
+        <div class="section visible" id="skills">
+            <h2>Skills</h2>
+            <ul class="skills-list">
+                <li>Lua Scripting</li>
+                <li>3D Modeling in Roblox Studio</li>
+                <li>Game Systems Creation</li>
+                <li>User Interface (UI) Design</li>
+            </ul>
+        </div>
+        <div class="section" id="projects">
+            <h2>Projects</h2>
+            <div class="project-grid">
+                <div class="project">
+                    <h3>A Totally Easy Obby</h3>
+                    <p>A game fully scripted and designed by me. It didn't gain much traction but was built quickly.</p>
+                    <p><a href="https://www.roblox.com/games/123926843583079/a-totally-easy-obby" target="_blank">Play it here</a></p>
+                </div>
+                <div class="project">
+                    <h3>AFH | Hub, Match Pitch</h3>
+                    <p>Contributed to the Hub's GUIs and various scripts in the Match Pitch.</p>
+                </div>
+                <div class="project">
+                    <h3>La Ciudad De Monterrey</h3>
+                    <p>Helped with various 3D models, scripted several weapons, and fixed some issues. Note that this was done in 2022.</p>
+                    <p><a href="https://www.roblox.com/games/12015492087/MONTERREY-RP" target="_blank">Play it here</a></p>
+                </div>
+            </div>
+        </div>
+        <div class="section" id="contact">
+            <h2>Contact</h2>
+            <p>Roblox: @encraq</p>
+            <p>Discord: encraz</p>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top >= 0 && rect.top < window.innerHeight) {
+                    section.classList.add('visible');
+                }
+            });
+        });
+
+        window.addEventListener('load', () => {
+            const initialSections = document.querySelectorAll('#about, #skills');
+            initialSections.forEach(section => section.classList.add('visible'));
+        });
+    </script>
+</body>
+</html>
